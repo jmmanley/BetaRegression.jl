@@ -447,7 +447,7 @@ function StatsAPI.fit!(b::BetaRegressionModel; maxiter=100, atol=1e-8, rtol=1e-8
     z = zero(params(b))
     scratch = similar(params(b))
     for iter in 1:maxiter
-        precision(b) > 0 || b.parameters[end] = 1
+        precision(b) > 0 || (b.parameters[end] = 1)
         U = score(b)
         checkfinite(U, iter)
         isapprox(U, z; atol, rtol) && return b  # converged!
