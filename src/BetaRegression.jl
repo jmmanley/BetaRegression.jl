@@ -285,7 +285,7 @@ function initialize!(b::BetaRegressionModel)
     # We have to use the constructors directly because `LinearModel` supports an
     # offset but it isn't exposed by `lm`
     model = LinearModel(LmResp{typeof(y)}(zero(y), offset(b), weights(b), y),
-                        cholpred(X, true))
+                        cholpred(X, true), nothing)
     fit!(model)
     β = coef(model)
     η = fitted(model)
