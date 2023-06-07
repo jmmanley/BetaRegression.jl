@@ -15,7 +15,7 @@ using StatsModels
 using GLM: Link01, LmResp, cholpred, inverselink, linkfun, linkinv, mueta
 using LinearAlgebra: copytri!
 using StatsAPI: aic, aicc, bic, linearpredictor, linearpredictor!, offset, params
-using StatsModels: TableRegressionModel, @delegate
+using StatsModels: TableRegressionModel, @delegate, formula
 
 export
     BetaRegressionModel,

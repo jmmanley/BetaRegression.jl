@@ -8,6 +8,7 @@ using Test
 
 using GLM: linkinv
 using BetaRegression: 🐟, dmueta
+using StatsModels: formula
 
 # NOTE: Where it makes sense (and is possible) to do so, values are tested against
 # `betareg(formula, data, link="logit", link.phi="identity", type="ML")` in R with
