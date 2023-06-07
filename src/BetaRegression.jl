@@ -447,6 +447,11 @@ function StatsAPI.fit!(b::BetaRegressionModel; maxiter=100, atol=1e-8, rtol=1e-8
     z = zero(params(b))
     scratch = similar(params(b))
     for iter in 1:maxiter
+        if precision(b) < 0
+            # @warn "ϕ<0 during BetaRegression fit iteration " * string(iter) *
+            #       ", setting ϕ=1"
+            b.parameters[end] = 1 # if negative, set ϕ=1
+        end
         U = score(b)
         checkfinite(U, iter)
         isapprox(U, z; atol, rtol) && return b  # converged!
