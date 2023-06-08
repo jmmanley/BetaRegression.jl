@@ -72,7 +72,7 @@ The mean response is linked to the linear predictor by a link function with type
 for link functions.
 """
 struct BetaRegressionModel{T<:AbstractFloat,L<:Link01,V<:AbstractVector{T},
-    M<:AbstractMatrix{T}} <: RegressionModel
+                           M<:AbstractMatrix{T}} <: RegressionModel
     y::V
     X::M
     weights::Vector{T}
@@ -92,8 +92,8 @@ Construct a `BetaRegressionModel` object with the given model matrix `X`, respon
     than `nothing` or an empty array for `weights` will result in an error for now.
 """
 function BetaRegressionModel(X::AbstractMatrix, y::AbstractVector,
-    link::Link01=LogitLink();
-    weights=nothing, offset=nothing)
+                             link::Link01=LogitLink();
+                             weights=nothing, offset=nothing)
     n, p = size(X)
     p < n || throw(ArgumentError("model matrix must have fewer columns than rows"))
     if n != length(y)
@@ -119,20 +119,17 @@ function BetaRegressionModel(X::AbstractMatrix, y::AbstractVector,
     _X = convert(AbstractMatrix{T}, X)
     _y = convert(AbstractVector{T}, y)
     return BetaRegressionModel{T,typeof(link),typeof(_y),typeof(_X)}(_y, _X, weights,
-        offset, parameters, η)
+                                                                     offset, parameters, η)
 end
 
 function Base.show(io::IO, b::BetaRegressionModel{T,L}) where {T,L}
-    print(
-        io,
-        """
-    BetaRegressionModel{$T,$L}
-        $(nobs(b)) observations
-        $(dof(b)) degrees of freedom
+    print(io, """
+          BetaRegressionModel{$T,$L}
+              $(nobs(b)) observations
+              $(dof(b)) degrees of freedom
 
-    Coefficients:
-    """
-    )
+          Coefficients:
+          """)
     show(io, coeftable(b))
     return nothing
 end
@@ -147,7 +144,7 @@ StatsAPI.offset(b::BetaRegressionModel) = b.offset
 
 StatsAPI.params(b::BetaRegressionModel) = b.parameters
 
-StatsAPI.coef(b::BetaRegressionModel) = params(b)[1:(end-1)]
+StatsAPI.coef(b::BetaRegressionModel) = params(b)[1:(end - 1)]
 
 """
     precision(model::BetaRegressionModel)
@@ -212,8 +209,8 @@ function StatsAPI.coeftable(b::BetaRegressionModel; level::Real=0.95)
     level *= 100
     s = string(isinteger(level) ? trunc(Int, level) : level)
     return CoefTable(hcat(θ, se, z, p, ci),
-        ["Coef.", "Std. Error", "z", "Pr(>|z|)", "Lower $s%", "Upper $s%"],
-        push!(map(i -> "x$i", 1:(length(θ)-1)), "(Precision)"), 4, 3)
+                     ["Coef.", "Std. Error", "z", "Pr(>|z|)", "Lower $s%", "Upper $s%"],
+                     push!(map(i -> "x$i", 1:(length(θ) - 1)), "(Precision)"), 4, 3)
 end
 
 function StatsAPI.confint(b::BetaRegressionModel; level::Real=0.95)
@@ -288,7 +285,7 @@ function initialize!(b::BetaRegressionModel)
     # We have to use the constructors directly because `LinearModel` supports an
     # offset but it isn't exposed by `lm`
     model = LinearModel(LmResp{typeof(y)}(zero(y), offset(b), weights(b), y),
-        cholpred(X, true))
+                        cholpred(X, true))
     fit!(model)
     β = coef(model)
     η = fitted(model)
@@ -401,8 +398,8 @@ function 🐟(b::BetaRegressionModel, expected::Bool, inverse::Bool)
         Kϕϕ = γ
     end
     K = Matrix{T}(undef, k, k)
-    copyto!(view(K, 1:(k-1), 1:(k-1)), Symmetric(Kββ))
-    copyto!(view(K, 1:(k-1), k), Kβϕ)
+    copyto!(view(K, 1:(k - 1), 1:(k - 1)), Symmetric(Kββ))
+    copyto!(view(K, 1:(k - 1), k), Kβϕ)
     K[k, k] = Kϕϕ
     return Symmetric(K)
 end
@@ -415,7 +412,7 @@ StatsAPI.vcov(b::BetaRegressionModel) = 🐟(b, true, true)
 function checkfinite(x, iters)
     if any(!isfinite, x)
         throw(ConvergenceException(iters, NaN, NaN,
-            "Coefficient update contains infinite values."))
+                                   "Coefficient update contains infinite values."))
     end
     return nothing
 end
@@ -437,7 +434,6 @@ function StatsAPI.fit!(b::BetaRegressionModel; maxiter=100, atol=1e-8, rtol=1e-8
     initialize!(b)
     z = zero(params(b))
     for iter in 1:maxiter
-        precision(b) > 0 || (b.parameters[end] = 1)
         U = score(b)
         checkfinite(U, iter)
         isapprox(U, z; atol, rtol) && return b  # converged!
@@ -472,8 +468,8 @@ logit link is used.
 - `rtol`: Relative tolerance to use when checking for convergence. Default is also 1e-8.
 """
 function StatsAPI.fit(::Type{BetaRegressionModel}, X::AbstractMatrix, y::AbstractVector,
-    link=LogitLink(); weights=nothing, offset=nothing, maxiter=100,
-    atol=1e-8, rtol=1e-8)
+                      link=LogitLink(); weights=nothing, offset=nothing, maxiter=100,
+                      atol=1e-8, rtol=1e-8)
     b = BetaRegressionModel(X, y, link; weights, offset)
     fit!(b; maxiter, atol, rtol)
     return b
@@ -481,8 +477,8 @@ end
 
 # TODO: Move the StatsAPI extensions to the delegations that happen in StatsModels itself
 @delegate(TableRegressionModel{<:BetaRegressionModel}.model,
-    [Base.precision, GLM.Link, GLM.devresid, StatsAPI.informationmatrix,
-        StatsAPI.linearpredictor, StatsAPI.offset, StatsAPI.score, StatsAPI.weights])
+          [Base.precision, GLM.Link, GLM.devresid, StatsAPI.informationmatrix,
+           StatsAPI.linearpredictor, StatsAPI.offset, StatsAPI.score, StatsAPI.weights])
 
 StatsAPI.responsename(m::TableRegressionModel{<:BetaRegressionModel}) =
     sprint(show, formula(m).lhs)
